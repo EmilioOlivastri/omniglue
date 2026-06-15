@@ -14,12 +14,10 @@
 
 """Wrapper for performing OmniGlue inference, plus (optionally) SP/DINO."""
 
-from typing import Optional
-
 import numpy as np
-from omniglue import dino_extract
-from omniglue import superpoint_extract
-from omniglue import utils
+from . import dino_extract
+from . import superpoint_extract
+from . import utils
 import tensorflow as tf
 
 DINO_FEATURE_DIM = 768
@@ -32,8 +30,8 @@ class OmniGlue:
   def __init__(
       self,
       og_export: str,
-      sp_export: Optional[str] = None,
-      dino_export: Optional[str] = None,
+      sp_export: str = None,
+      dino_export: str = None,
   ) -> None:
     self.matcher = tf.saved_model.load(og_export)
     if sp_export is not None:
@@ -107,6 +105,52 @@ class OmniGlue:
     match_kp1s = np.array(match_kp1s)
     match_confidences = np.array(match_confidences)
     return match_kp0s, match_kp1s, match_confidences
+  
+  def matchKeyPoints(self, referenceKF, currentFrame):
+
+    width0 = width1 = referenceKF.width
+    height0 = height1 = referenceKF.height
+
+    sp_features0 = referenceKF.fullkpt
+    sp_features1 = currentFrame.fullkpt
+    dino_descriptors0 = referenceKF.keydesc
+    dino_descriptors1 = currentFrame.keydesc
+
+    inputs = self._construct_inputs(
+        width0,
+        height0,
+        width1,
+        height1,
+        sp_features0,
+        sp_features1,
+        dino_descriptors0,
+        dino_descriptors1,
+    )
+
+    og_outputs = self.matcher.signatures['serving_default'](**inputs)
+    soft_assignment = og_outputs['soft_assignment'][:, :-1, :-1]
+
+    match_matrix = (
+        utils.soft_assignment_to_match_matrix(soft_assignment, MATCH_THRESHOLD)
+        .numpy()
+        .squeeze()
+    )
+
+    # Filter out any matches with 0.0 confidence keypoints.
+    match_indices = np.argwhere(match_matrix)
+    matchedMapPoint = []
+    for i in range(match_indices.shape[0]):
+      match = match_indices[i, :]
+      if (sp_features0[2][match[0]] > 0.0) and (
+          sp_features1[2][match[1]] > 0.0
+      ):
+        matchedMapPoint.append(referenceKF.map_points[match[0]])
+
+    return matchedMapPoint
+
+
+
+    return 
 
   ### Private methods ###
 
@@ -159,3 +203,5 @@ class OmniGlue:
         ),
     }
     return inputs
+  
+

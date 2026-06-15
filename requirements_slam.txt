@@ -1,0 +1,16 @@
+# Core scientific stack (NumPy MUST be < 2)
+numpy==1.23.5
+matplotlib==3.6.3
+
+# Computer vision
+opencv-python==4.7.0.72
+Pillow==9.5.0
+
+# Utilities
+gdown==4.7.1
+
+# PyTorch (DINOv2 side, CUDA handled by conda)
+torch==2.0.1
+
+# TensorFlow (SuperPoint / OmniGlue)
+tensorflow==2.9.1

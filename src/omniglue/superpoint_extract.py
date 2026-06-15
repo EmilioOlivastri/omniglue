@@ -19,7 +19,7 @@ from typing import Optional, Tuple
 
 import cv2
 import numpy as np
-from omniglue import utils
+from . import utils
 import tensorflow.compat.v1 as tf1
 
 
@@ -37,7 +37,7 @@ class SuperPointExtract:
     self.model_path = model_path
     self._graph = tf1.Graph()
     self._sess = tf1.Session(graph=self._graph)
-    tf1.saved_model.loader.load(
+    tf1.saved_model.load(
         self._sess, [tf1.saved_model.tag_constants.SERVING], model_path
     )
 

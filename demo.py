@@ -20,10 +20,11 @@ import sys
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-import omniglue
-from omniglue import utils
+import src.omniglue as omniglue
+from src.omniglue import utils
 from PIL import Image
 
+import tensorflow as tf
 
 def main(argv) -> None:
   if len(argv) != 3:
@@ -34,6 +35,9 @@ def main(argv) -> None:
     if not os.path.exists(im_fp) or not os.path.isfile(im_fp):
       raise ValueError(f"Image filepath '{im_fp}' doesn't exist or is not a file.")
 
+
+  physical_devices = tf.config.list_physical_devices('GPU')
+  tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
   # Load images.
   print("> Loading images...")
